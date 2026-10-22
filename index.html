@@ -1,0 +1,659 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MEGA SCAN v23.0 // WEB OSINT</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020305;
+    --panel: rgba(8, 15, 12, 0.7);
+    --border: rgba(0, 255, 170, 0.25);
+    --main: #00ffaa;
+    --main-glow: rgba(0, 255, 170, 0.5);
+    --text: #e0f0e8;
+    --text-muted: #508870;
+    --danger: #ff2a55;
+    --warn: #ffbb00;
+    --info: #00d4ff;
+  }
+  [data-theme="light"] {
+    --bg: #f0f4f8; --panel: rgba(255, 255, 255, 0.85); --border: rgba(0, 100, 80, 0.3);
+    --main: #007a5e; --main-glow: rgba(0, 122, 94, 0.3); --text: #1a2a22;
+    --text-muted: #6b8a7a; --danger: #c0392b; --warn: #d35400; --info: #2980b9;
+  }
+  [data-theme="cyber"] {
+    --bg: #0b0c10; --panel: rgba(31, 40, 51, 0.85); --border: rgba(252, 238, 10, 0.3);
+    --main: #fcee0a; --main-glow: rgba(252, 238, 10, 0.5); --text: #c5c6c7;
+    --text-muted: #45a29e; --danger: #ff003c; --warn: #f39c12; --info: #00e5ff;
+  }
+  [data-theme="matrix"] {
+    --bg: #000000; --panel: rgba(0, 20, 0, 0.85); --border: rgba(0, 255, 65, 0.3);
+    --main: #00ff41; --main-glow: rgba(0, 255, 65, 0.6); --text: #00ff41;
+    --text-muted: #008800; --danger: #ff0000; --warn: #ffff00; --info: #00ffff;
+  }
+  [data-theme="blood"] {
+    --bg: #1a0505; --panel: rgba(43, 10, 10, 0.85); --border: rgba(255, 0, 0, 0.3);
+    --main: #ff0000; --main-glow: rgba(255, 0, 0, 0.5); --text: #f5d6d6;
+    --text-muted: #9c6060; --danger: #ff4444; --warn: #ffaa00; --info: #ff6666;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+  
+  body {
+    background-color: var(--bg);
+    background-image: 
+      radial-gradient(circle at 50% -10%, var(--main-glow) 0%, transparent 60%),
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 100% 100%, 30px 30px, 30px 30px;
+    color: var(--text); font-size: 14px; -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden; padding: 10px; padding-top: 140px; min-height: 100vh;
+    animation: bgPan 15s linear infinite;
+  }
+
+  @keyframes bgPan { 0% { background-position: center top, 0 0, 0 0; } 100% { background-position: center top, 30px 30px, 30px 30px; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Переключатель тем */
+  .theme-switcher {
+    position: fixed; top: 10px; right: 10px; z-index: 2001;
+    display: flex; gap: 6px; background: var(--panel); padding: 6px; border-radius: 20px; border: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+  }
+  .theme-dot {
+    width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;
+    transition: 0.2s; box-shadow: 0 0 5px rgba(0,0,0,0.5);
+  }
+  .theme-dot.active { border-color: var(--text); transform: scale(1.1); }
+  .theme-dot[data-theme="dark"] { background: #020305; }
+  .theme-dot[data-theme="light"] { background: #f0f4f8; }
+  .theme-dot[data-theme="cyber"] { background: #fcee0a; }
+  .theme-dot[data-theme="matrix"] { background: #00ff41; }
+  .theme-dot[data-theme="blood"] { background: #ff0000; }
+
+  /* HUD */
+  #hud-container {
+    position: fixed; top: 10px; left: 10px; right: 90px;
+    background: var(--panel); backdrop-filter: blur(15px);
+    border: 1px solid var(--border); border-radius: 14px;
+    padding: 10px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  #hud-log { height: 40px; overflow-y: auto; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--text-muted); }
+  .hud-input-row input {
+    width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+    color: var(--main); padding: 8px 10px; border-radius: 8px; font-size: 12px; outline: none;
+  }
+
+  /* Заголовок */
+  .header { text-align: center; margin-bottom: 20px; }
+  .header h1 { font-family: 'Orbitron', sans-serif; font-size: 22px; letter-spacing: 6px; color: var(--main); text-shadow: 0 0 15px var(--main-glow); }
+  .header p { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-muted); letter-spacing: 3px; }
+
+  /* Меню */
+  .category-menu { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; scrollbar-width: none; }
+  .category-menu::-webkit-scrollbar { display: none; }
+  .cat-btn {
+    background: var(--panel); border: 1px solid var(--border); color: var(--text-muted);
+    border-radius: 20px; padding: 8px 14px; font-size: 11px; cursor: pointer;
+    white-space: nowrap; transition: 0.3s; text-transform: uppercase;
+  }
+  .cat-btn.active { background: var(--main); color: var(--bg); border-color: var(--main); box-shadow: 0 0 10px var(--main-glow); }
+
+  /* Поле поиска */
+  .search-box { display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px; }
+  .input-wrapper {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    display: flex; align-items: center; padding: 2px; transition: 0.3s;
+  }
+  .input-wrapper:focus-within { border-color: var(--main); box-shadow: 0 0 20px var(--main-glow); }
+  .input-prefix { padding-left: 15px; color: var(--main); font-family: 'Share Tech Mono', monospace; font-size: 16px; }
+  input[type="text"] { width: 100%; background: transparent; border: none; color: var(--text); padding: 14px; font-family: 'Share Tech Mono', monospace; font-size: 15px; outline: none; }
+
+  .action-btn {
+    background: var(--main); color: var(--bg); border: none; padding: 16px;
+    border-radius: 14px; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 14px; cursor: pointer;
+    text-transform: uppercase; letter-spacing: 2px; transition: 0.2s; box-shadow: 0 0 20px var(--main-glow);
+  }
+  .action-btn:active { transform: scale(0.97); }
+  .action-btn:disabled { background: #333; color: #666; box-shadow: none; }
+
+  /* Терминал */
+  #terminal-window {
+    background: rgba(0,0,0,0.6); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px; height: 120px; overflow-y: auto; margin-bottom: 15px;
+    font-family: 'Share Tech Mono', monospace; font-size: 11px; line-height: 1.6;
+  }
+  .log-info { color: var(--main); }
+  .log-warn { color: var(--warn); }
+  .log-error { color: var(--danger); }
+  .log-success { color: var(--info); }
+
+  /* Отчёт */
+  #report-container {
+    background: var(--panel); backdrop-filter: blur(20px);
+    border: 1px solid var(--main); border-radius: 16px; padding: 15px;
+    display: none; animation: slideUp 0.4s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  .report-header { text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px; }
+  .report-header h2 { font-family: 'Orbitron', sans-serif; color: var(--main); font-size: 18px; letter-spacing: 2px; }
+  .report-header span { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--text-muted); background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 8px; display: inline-block; margin-top: 5px; }
+
+  .data-block { margin-bottom: 15px; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 12px; border: 1px solid var(--border); }
+  .data-title { font-family: 'Orbitron', sans-serif; color: var(--info); font-weight: 700; font-size: 12px; display: block; margin-bottom: 8px; letter-spacing: 1px; }
+  .data-row { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding: 8px 0; font-family: 'Share Tech Mono', monospace; font-size: 12px; }
+  .data-row:last-child { border-bottom: none; }
+  .data-key { color: var(--text-muted); flex: 1; }
+  .data-val { color: var(--text); flex: 2; text-align: right; word-break: break-all; }
+
+  .badge { padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; }
+  .bg-danger { background: rgba(255, 42, 85, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+  .bg-success { background: rgba(0, 255, 170, 0.1); color: var(--main); border: 1px solid var(--main); }
+
+  /* Экран авторизации (скрыт, но оставлен для совместимости) */
+  #auth-screen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+    background: var(--bg); z-index: 2000; display: none; flex-direction: column;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Переключатель тем -->
+<div class="theme-switcher">
+  <div class="theme-dot active" data-theme="dark" onclick="setTheme('dark')"></div>
+  <div class="theme-dot" data-theme="light" onclick="setTheme('light')"></div>
+  <div class="theme-dot" data-theme="cyber" onclick="setTheme('cyber')"></div>
+  <div class="theme-dot" data-theme="matrix" onclick="setTheme('matrix')"></div>
+  <div class="theme-dot" data-theme="blood" onclick="setTheme('blood')"></div>
+</div>
+
+<!-- HUD -->
+<div id="hud-container">
+  <div id="hud-log"><div>[SYS] Система инициализирована.</div></div>
+  <div class="hud-input-row">
+    <input type="text" id="hud-input" placeholder="Ввод команды..." onkeypress="handleHudKey(event)">
+  </div>
+</div>
+
+<div class="header">
+  <h1>MEGA SCAN</h1>
+  <p>WEB OSINT // REAL DATA ONLY</p>
+</div>
+
+<!-- Меню режимов -->
+<div class="category-menu" id="category-menu">
+  <button class="cat-btn active" onclick="setMode('auto', event)">АВТО</button>
+  <button class="cat-btn" onclick="setMode('person', event)">ФИО</button>
+  <button class="cat-btn" onclick="setMode('ip', event)">IP</button>
+  <button class="cat-btn" onclick="setMode('domain', event)">ДОМЕН</button>
+  <button class="cat-btn" onclick="setMode('email', event)">EMAIL</button>
+  <button class="cat-btn" onclick="setMode('phone', event)">ТЕЛЕФОН</button>
+  <button class="cat-btn" onclick="setMode('username', event)">НИК</button>
+  <button class="cat-btn" onclick="setMode('crypto', event)">КРИПТА</button>
+  <button class="cat-btn" onclick="setMode('coords', event)">КООРД</button>
+  <button class="cat-btn" onclick="setMode('vin', event)">VIN</button>
+  <button class="cat-btn" onclick="setMode('url', event)">URL</button>
+  <button class="cat-btn" onclick="setMode('mac', event)">MAC</button>
+  <button class="cat-btn" onclick="setMode('card', event)">КАРТА</button>
+  <button class="cat-btn" onclick="setMode('hash', event)">ХЕШ</button>
+  <button class="cat-btn" onclick="setMode('asn', event)">ASN</button>
+</div>
+
+<div class="search-box">
+  <div class="input-wrapper">
+    <span class="input-prefix">></span>
+    <input type="text" id="query" placeholder="Введи данные для сканирования...">
+  </div>
+  <button class="action-btn" id="search-btn" onclick="startMegaScan(false)">[ СКАНИРОВАТЬ ]</button>
+</div>
+
+<div id="terminal-window">
+  <div class="log-info">> Ожидание цели...</div>
+</div>
+
+<div id="report-container"></div>
+
+<script>
+// ================= ТЕМЫ =================
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+  document.querySelector(`.theme-dot[data-theme="${theme}"]`).classList.add('active');
+  localStorage.setItem('osint_theme_web', theme);
+}
+setTheme(localStorage.getItem('osint_theme_web') || 'dark');
+
+// ================= HUD =================
+const hudLog = document.getElementById('hud-log');
+const hudInput = document.getElementById('hud-input');
+function handleHudKey(e) {
+  if (e.key === 'Enter') {
+    const text = hudInput.value.trim();
+    if (text) {
+      hudLog.innerHTML += `<div style="color:var(--warn)">[ТЫ] ${text}</div>`;
+      hudLog.scrollTop = hudLog.scrollHeight;
+      hudInput.value = '';
+    }
+  }
+}
+
+// ================= ЯДРО =================
+let isSearching = false, currentMode = 'auto';
+const term = document.getElementById('terminal-window');
+const reportDiv = document.getElementById('report-container');
+const searchBtn = document.getElementById('search-btn');
+const queryInput = document.getElementById('query');
+
+function setMode(mode, event) {
+  currentMode = mode;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  const placeholders = {
+    'auto': 'Введи цель...', 'person': 'ФИО (Иван Иванов)', 'ip': 'IP (8.8.8.8)', 'domain': 'Домен (google.com)',
+    'email': 'Email (test@mail.ru)', 'phone': 'Телефон (+7900...)', 'username': 'Ник',
+    'crypto': 'Кошелек (BTC, ETH, TRX)', 'coords': 'Координаты (55.75, 37.61)',
+    'vin': 'VIN-код', 'url': 'Ссылка (http://...)', 'mac': 'MAC (00:1A:2B:3C:4D:5E)',
+    'card': 'Номер карты', 'hash': 'MD5/SHA1 хеш', 'asn': 'ASN (AS15169)'
+  };
+  queryInput.placeholder = placeholders[mode] || 'Введи данные...';
+  queryInput.value = '';
+  term.innerHTML = `<div class="log-info">> Режим: ${mode.toUpperCase()}.</div>`;
+}
+
+// Массив CORS-прокси для обхода ограничений браузера
+const proxies = [
+  "https://api.allorigins.win/raw?url=",
+  "https://api.codetabs.com/v1/proxy?quest=",
+  "https://corsproxy.io/?",
+  "https://api.cors.lol/?url=",
+  "https://thingproxy.freeboard.io/fetch/"
+];
+
+async function fetchProxy(targetUrl, type = 'json') {
+  for (let proxy of proxies) {
+    try {
+      const res = await fetch(proxy + encodeURIComponent(targetUrl), { 
+        headers: { 'Accept': 'application/json, text/plain, */*' } 
+      });
+      if (res.ok) {
+        const text = await res.text();
+        try { return type === 'json' ? JSON.parse(text) : text; } catch(e) { return text; }
+      }
+    } catch (e) { continue; }
+  }
+  return null;
+}
+
+function log(text, type = 'info', delay = 150) {
+  return new Promise(resolve => {
+    const div = document.createElement('div');
+    div.className = `log-${type}`;
+    div.innerHTML = `> [${new Date().toLocaleTimeString()}] ${text}`;
+    term.appendChild(div);
+    term.scrollTop = term.scrollHeight;
+    setTimeout(resolve, delay);
+  });
+}
+
+function detectType(q) {
+  if (/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(q)) return 'ip';
+  if (/^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/.test(q)) return 'domain';
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q)) return 'email';
+  if (/^\+?[0-9]{10,15}$/.test(q)) return 'phone';
+  if (/^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$/.test(q) || /^0x[a-fA-F0-9]{40}$/.test(q) || /^T[a-zA-Z0-9]{33}$/.test(q)) return 'crypto';
+  if (/^(http|https):\/\/[^ "]+$/.test(q)) return 'url';
+  if (/^-?\d{1,3}\.\d+,\s*-?\d{1,3}\.\d+$/.test(q)) return 'coords';
+  if (/^[A-HJ-NPR-Z0-9]{17}$/i.test(q)) return 'vin';
+  if (/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/.test(q)) return 'mac';
+  if (/^[0-9]{16}$/.test(q)) return 'card';
+  if (/^[a-fA-F0-9]{32}$/.test(q) || /^[a-fA-F0-9]{40}$/.test(q)) return 'hash';
+  if (/^AS[0-9]+$/i.test(q)) return 'asn';
+  if (/^[А-ЯЁA-Z][а-яёa-z]+\s+[А-ЯЁA-Z][а-яёa-z]+(\s+[А-ЯЁA-Z][а-яёa-z]+)?$/.test(q)) return 'person';
+  return 'username';
+}
+
+async function startMegaScan(isSilent = false) {
+  if (isSearching) return null;
+  const query = queryInput.value.trim();
+  if (!query) { if(!isSilent) log("ОШИБКА: Пустой запрос.", "error"); return null; }
+
+  const type = (currentMode === 'auto') ? detectType(query) : currentMode;
+  isSearching = true;
+  if (!isSilent) {
+    searchBtn.disabled = true; reportDiv.style.display = 'none';
+    term.innerHTML = "";
+    await log(`Запуск сканирования [${type.toUpperCase()}]...`, "info");
+  }
+
+  let result = null;
+  try {
+    if (type === 'ip') result = await moduleIP(query);
+    else if (type === 'domain') result = await moduleDomain(query);
+    else if (type === 'email') result = await moduleEmail(query);
+    else if (type === 'phone') result = await modulePhone(query);
+    else if (type === 'person') result = await modulePerson(query);
+    else if (type === 'username') result = await moduleNick(query);
+    else if (type === 'crypto') result = await moduleCrypto(query);
+    else if (type === 'coords') result = await moduleCoords(query);
+    else if (type === 'vin') result = await moduleVIN(query);
+    else if (type === 'url') result = await moduleURL(query);
+    else if (type === 'mac') result = await moduleMAC(query);
+    else if (type === 'card') result = await moduleCard(query);
+    else if (type === 'hash') result = await moduleHash(query);
+    else if (type === 'asn') result = await moduleASN(query);
+    else result = { found: false, html: "Неизвестный формат." };
+
+    if (!isSilent) {
+      let htmlReport = `<div class="report-header"><h2>ДОКЛАД</h2><span>${query} | ${type.toUpperCase()}</span></div>`;
+      if (result && result.found) {
+        htmlReport += result.html;
+        await log(`Сканирование завершено.`, "success");
+      } else {
+        htmlReport += `<div class="data-block"><div class="data-title" style="color:var(--danger)">ДАННЫЕ НЕ ОБНАРУЖЕНЫ</div><div style="color:var(--text); font-size:12px;">${result ? result.html : 'API не вернуло ответ.'}</div></div>`;
+        await log(`Совпадений нет.`, "warn");
+      }
+      reportDiv.innerHTML = htmlReport; reportDiv.style.display = 'block';
+    }
+    return JSON.stringify(result);
+  } catch (e) {
+    if(!isSilent) await log("[CRITICAL] СБОЙ: " + e.message, "error");
+    return null;
+  } finally {
+    isSearching = false; if (!isSilent) searchBtn.disabled = false;
+  }
+}
+
+// ================= МОДУЛИ =================
+
+async function modulePerson(name) {
+  let found = false, html = "";
+  await log(`[API] OpenSanctions...`, "info");
+  const osRes = await fetchProxy(`https://api.opensanctions.org/search/default?q=${encodeURIComponent(name)}`);
+  if (osRes && osRes.results && osRes.results.length > 0) {
+    found = true;
+    html += `<div class="data-block"><span class="data-title">OPENSANCTIONS</span>`;
+    osRes.results.slice(0, 5).forEach(r => {
+      html += `<div class="data-row"><span class="data-key">${r.caption}:</span> <span class="data-val">ID: ${r.id}</span></div>`;
+    });
+    html += `</div>`;
+  }
+  await log(`[API] Wikipedia...`, "info");
+  const wikiRes = await fetchProxy(`https://ru.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(name)}&format=json&origin=*`);
+  if (wikiRes && wikiRes.query && wikiRes.query.search && wikiRes.query.search.length > 0) {
+    found = true;
+    html += `<div class="data-block"><span class="data-title">WIKIPEDIA</span>`;
+    wikiRes.query.search.slice(0, 3).forEach(s => {
+      html += `<div class="data-row"><span class="data-key">${s.title}:</span> <span class="data-val">${s.snippet.replace(/<[^>]+>/g, '')}...</span></div>`;
+    });
+    html += `</div>`;
+  }
+  return { found, html: found ? html : "По ФИО ничего не найдено." };
+}
+
+async function moduleNick(nick) {
+  let found = false, html = "";
+  let n = nick.replace(/^@/, '').toLowerCase();
+
+  await log(`[API] GitHub...`, "info");
+  const gh = await fetchProxy(`https://api.github.com/users/${n}`);
+  if (gh && !gh.message) {
+    found = true;
+    html += `<div class="data-block"><span class="data-title">GITHUB</span>`;
+    html += `<div class="data-row"><span class="data-key">Имя:</span> <span class="data-val">${gh.name || 'Скрыто'}</span></div>`;
+    html += `</div>`;
+  }
+
+  await log(`[API] Telegram...`, "info");
+  const tgHtml = await fetchProxy(`https://t.me/${n}?embed=1`, 'text');
+  if (tgHtml && tgHtml.includes('tgme_page_title')) {
+    found = true;
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(tgHtml, 'text/html');
+    const title = doc.querySelector('.tgme_page_title')?.textContent.trim() || 'Существует';
+    const extra = doc.querySelector('.tgme_page_extra')?.textContent.trim() || '';
+    html += `<div class="data-block"><span class="data-title">TELEGRAM</span>`;
+    html += `<div class="data-row"><span class="data-key">Имя:</span> <span class="data-val">${title}</span></div>`;
+    if(extra) html += `<div class="data-row"><span class="data-key">Инфо:</span> <span class="data-val">${extra}</span></div>`;
+    html += `</div>`;
+  }
+
+  await log(`[API] Reddit...`, "info");
+  const reddit = await fetchProxy(`https://www.reddit.com/user/${n}/about.json`);
+  if (reddit && reddit.data && !reddit.data.error) {
+    found = true;
+    html += `<div class="data-block"><span class="data-title">REDDIT</span>`;
+    html += `<div class="data-row"><span class="data-key">Карма:</span> <span class="data-val">${reddit.data.total_karma}</span></div>`;
+    html += `<div class="data-row"><span class="data-key">Регистрация:</span> <span class="data-val">${new Date(reddit.data.created_utc * 1000).toLocaleDateString()}</span></div>`;
+    html += `</div>`;
+  }
+
+  await log(`[API] VK...`, "info");
+  const vkHtml = await fetchProxy(`https://vk.com/${n}`, 'text');
+  if (vkHtml && vkHtml.includes('og:title') && !vkHtml.includes('404')) {
+    const vkTitle = vkHtml.match(/<meta property="og:title" content="([^"]+)"/);
+    if (vkTitle) {
+      found = true;
+      html += `<div class="data-block"><span class="data-title">VK</span>`;
+      html += `<div class="data-row"><span class="data-key">Имя:</span> <span class="data-val">${vkTitle[1]}</span></div>`;
+      html += `</div>`;
+    }
+  }
+
+  await log(`[API] Spotify...`, "info");
+  const spHtml = await fetchProxy(`https://open.spotify.com/user/${n}`, 'text');
+  if (spHtml && spHtml.includes('<title>')) {
+    const spTitle = spHtml.match(/<title>([^<]+)<\/title>/);
+    if (spTitle && !spTitle[1].includes('Page not found')) {
+      found = true;
+      html += `<div class="data-block"><span class="data-title">SPOTIFY</span>`;
+      html += `<div class="data-row"><span class="data-key">Профиль:</span> <span class="data-val">${spTitle[1].replace(' | Spotify', '')}</span></div>`;
+      html += `</div>`;
+    }
+  }
+  return { found, html: found ? html : "Никнейм не найден." };
+}
+
+async function moduleEmail(email) {
+  let found = false, html = "";
+  const xon = await fetchProxy(`https://api.xposedornot.com/v1/check-email/${encodeURIComponent(email)}`);
+  html += `<div class="data-block"><span class="data-title">УТЕЧКИ</span>`;
+  if (xon && xon.Error) {
+    html += `<div class="data-row"><span class="data-key">Статус:</span> <span class="data-val" style="color:var(--warn)">Ошибка API</span></div>`;
+  } else if (xon && xon.breaches && xon.breaches.length > 0) {
+    found = true;
+    html += `<div class="data-row"><span class="data-key">Статус:</span> <span class="data-val"><span class="badge bg-danger">СЛИТ</span></span></div>`;
+    html += `<div class="data-row"><span class="data-key">Баз:</span> <span class="data-val">${xon.breaches.length} шт.</span></div>`;
+  } else {
+    found = true;
+    html += `<div class="data-row"><span class="data-key">Статус:</span> <span class="data-val"><span class="badge bg-success">УТЕЧЕК НЕТ</span></span></div>`;
+  }
+  html += `</div>`;
+
+  const disify = await fetchProxy(`https://disify.com/api/email/${encodeURIComponent(email)}`);
+  if (disify && disify.format !== undefined) {
+    found = true;
+    html += `<div class="data-block"><span class="data-title">DISIFY</span>`;
+    html += `<div class="data-row"><span class="data-key">Одноразовый:</span> <span class="data-val">${disify.disposable ? '<span class="badge bg-danger">ДА</span>' : '<span class="badge bg-success">НЕТ</span>'}</span></div>`;
+    html += `</div>`;
+  }
+  return { found, html: found ? html : "Email не найден." };
+}
+
+async function moduleDomain(domain) {
+  let html = "", found = false;
+  const data = await fetchProxy(`https://rdap.org/domain/${domain}`);
+  if (data && data.events) {
+    found = true;
+    html += `<div class="data-block"><span class="data-title">RDAP (WHOIS)</span>`;
+    data.events.forEach(ev => {
+      if(ev.eventAction === 'registration') html += `<div class="data-row"><span class="data-key">Создан:</span> <span class="data-val">${new Date(ev.eventDate).toLocaleDateString()}</span></div>`;
+    });
+    html += `</div>`;
+  }
+  const dnsA = await fetchProxy(`https://dns.google/resolve?name=${domain}&type=A`);
+  if (dnsA && dnsA.Answer) {
+    found = true;
+    html += `<div class="data-block"><span class="data-title">DNS A (IP)</span>`;
+    dnsA.Answer.forEach(rec => {
+      if(rec.type === 1) html += `<div class="data-row"><span class="data-key">IP:</span> <span class="data-val">${rec.data}</span></div>`;
+    });
+    html += `</div>`;
+  }
+  return { found, html: found ? html : "Домен не найден." };
+}
+
+async function moduleIP(ip) {
+  let html = "", found = false;
+  const geo = await fetchProxy(`https://ipwho.is/${ip}`);
+  if (geo && geo.success) {
+    found = true;
+    html += `<div class="data-block"><span class="data-title">ГЕО</span>`;
+    html += `<div class="data-row"><span class="data-key">Страна:</span> <span class="data-val">${geo.country}</span></div>`;
+    html += `<div class="data-row"><span class="data-key">Город:</span> <span class="data-val">${geo.city}</span></div>`;
+    html += `<div class="data-row"><span class="data-key">Провайдер:</span> <span class="data-val">${geo.connection.isp}</span></div>`;
+    html += `</div>`;
+  }
+  const rdap = await fetchProxy(`https://rdap.org/ip/${ip}`);
+  if (rdap && rdap.name) {
+    found = true;
+    html += `<div class="data-block"><span class="data-title">RDAP (WHOIS IP)</span>`;
+    html += `<div class="data-row"><span class="data-key">Организация:</span> <span class="data-val">${rdap.name}</span></div>`;
+    html += `</div>`;
+  }
+  return { found, html: found ? html : "IP не найден." };
+}
+
+async function moduleMAC(mac) {
+  let html = "", found = false;
+  const vendor = await fetchProxy(`https://api.macvendors.com/${mac}`, 'text');
+  if (vendor && !vendor.includes('errors')) {
+    found = true;
+    html += `<div class="data-block"><span class="data-title">MAC VENDOR</span>`;
+    html += `<div class="data-row"><span class="data-key">Производитель:</span> <span class="data-val">${vendor}</span></div>`;
+    html += `</div>`;
+  }
+  return { found, html: found ? html : "Производитель не найден." };
+}
+
+async function moduleCard(card) {
+  let html = "", found = false;
+  const bin = card.substring(0, 6);
+  const data = await fetchProxy(`https://lookup.binlist.net/${bin}`);
+  if (data && data.scheme) {
+    found = true;
+    html += `<div class="data-block"><span class="data-title">BANK CARD INFO</span>`;
+    html += `<div class="data-row"><span class="data-key">Банк:</span> <span class="data-val">${data.bank?.name || 'Нет данных'}</span></div>`;
+    html += `<div class="data-row"><span class="data-key">Страна:</span> <span class="data-val">${data.country?.name || 'Нет данных'}</span></div>`;
+    html += `<div class="data-row"><span class="data-key">Тип:</span> <span class="data-val">${data.type} / ${data.scheme}</span></div>`;
+    html += `</div>`;
+  }
+  return { found, html: found ? html : "Информация о карте не найдена." };
+}
+
+async function moduleHash(hash) {
+  let html = "";
+  html += `<div class="data-block"><span class="data-title">HASH</span>`;
+  html += `<a href="https://crackstation.net/" target="_blank" class="audit-link">Проверить в CrackStation</a>`;
+  html += `<a href="https://md5decrypt.net/" target="_blank" class="audit-link">Проверить в MD5Decrypt</a>`;
+  html += `</div>`;
+  return { found: true, html };
+}
+
+async function moduleASN(asn) {
+  let html = "", found = false;
+  const data = await fetchProxy(`https://api.bgpview.io/asn/${asn}`);
+  if (data && data.data) {
+    found = true;
+    html += `<div class="data-block"><span class="data-title">ASN INFO</span>`;
+    html += `<div class="data-row"><span class="data-key">Имя:</span> <span class="data-val">${data.data.name}</span></div>`;
+    html += `<div class="data-row"><span class="data-key">Описание:</span> <span class="data-val">${data.data.description_short}</span></div>`;
+    html += `</div>`;
+  }
+  return { found, html: found ? html : "ASN не найден." };
+}
+
+async function modulePhone(phone) {
+  const data = await fetchProxy(`https://carrier-lookup-api.omkar.cloud/lookup?phone=${encodeURIComponent(phone)}`);
+  if (data && data.is_valid_number) {
+    let html = `<div class="data-block"><span class="data-title">ТЕЛЕФОН</span>`;
+    html += `<div class="data-row"><span class="data-key">Оператор:</span> <span class="data-val">${data.carrier}</span></div>`;
+    html += `</div>`;
+    return { found: true, html };
+  }
+  return { found: false, html: "Номер не найден." };
+}
+
+async function moduleCrypto(addr) {
+  let html = "", found = false;
+  if (addr.startsWith('T')) {
+    const data = await fetchProxy(`https://apilist.tronscanapi.com/api/account?address=${addr}`);
+    if (data && data.address) {
+      found = true;
+      html += `<div class="data-block"><span class="data-title">TRON</span>`;
+      html += `<div class="data-row"><span class="data-key">TRX:</span> <span class="data-val">${(data.balance / 1000000).toFixed(2)}</span></div>`;
+      html += `</div>`;
+    }
+  } else if (addr.startsWith('0x')) {
+    const data = await fetchProxy(`https://api.ethplorer.io/getAddressInfo/${addr}?apiKey=freekey`);
+    if (data && data.ETH) {
+      found = true;
+      html += `<div class="data-block"><span class="data-title">ETH</span>`;
+      html += `<div class="data-row"><span class="data-key">Баланс:</span> <span class="data-val">${data.ETH.balance}</span></div>`;
+      html += `</div>`;
+    }
+  } else {
+    const data = await fetchProxy(`https://blockstream.info/api/address/${addr}`);
+    if (data && data.chain_stats) {
+      found = true;
+      const balance = (data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum) / 100000000;
+      html += `<div class="data-block"><span class="data-title">BTC</span>`;
+      html += `<div class="data-row"><span class="data-key">Баланс:</span> <span class="data-val">${balance}</span></div>`;
+      html += `</div>`;
+    }
+  }
+  return { found, html: found ? html : "Кошелек пуст." };
+}
+
+async function moduleCoords(coords) {
+  const [lat, lon] = coords.split(',').map(s => s.trim());
+  const data = await fetchProxy(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=ru`);
+  if (data && data.locality) {
+    let html = `<div class="data-block"><span class="data-title">ГЕО</span>`;
+    html += `<div class="data-row"><span class="data-key">Страна:</span> <span class="data-val">${data.countryName}</span></div>`;
+    html += `<div class="data-row"><span class="data-key">Город:</span> <span class="data-val">${data.city || data.locality}</span></div>`;
+    html += `</div>`;
+    return { found: true, html };
+  }
+  return { found: false, html: "Ничего не найдено." };
+}
+
+async function moduleVIN(vin) {
+  const data = await fetchProxy(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/${vin}?format=json`);
+  if (data && data.Results && data.Results[0] && data.Results[0].Make !== 'N/A') {
+    const car = data.Results[0];
+    let html = `<div class="data-block"><span class="data-title">АВТО</span>`;
+    html += `<div class="data-row"><span class="data-key">Марка:</span> <span class="data-val">${car.Make}</span></div>`;
+    html += `<div class="data-row"><span class="data-key">Год:</span> <span class="data-val">${car.ModelYear}</span></div>`;
+    html += `</div>`;
+    return { found: true, html };
+  }
+  return { found: false, html: "VIN не распознан." };
+}
+
+async function moduleURL(url) {
+  const data = await fetchProxy(`https://unshorten.me/api/v2/unshorten?url=${encodeURIComponent(url)}`);
+  if (data && data.success) {
+    let html = `<div class="data-block"><span class="data-title">РЕДИРЕКТ</span>`;
+    html += `<div class="data-row"><span class="data-key">Ведет на:</span> <span class="data-val" style="font-size:11px; word-break:break-all;">${data.resolved_url}</span></div>`;
+    html += `</div>`;
+    return { found: true, html };
+  }
+  return { found: false, html: "Ошибка." };
+}
+</script>
+</body>
+</html>
