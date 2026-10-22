@@ -1,0 +1,347 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MEGA SCAN v28.0 // ULTIMATE</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020305; --panel: rgba(8, 15, 12, 0.7); --border: rgba(0, 255, 170, 0.25);
+    --main: #00ffaa; --main-glow: rgba(0, 255, 170, 0.5); --text: #e0f0e8;
+    --text-muted: #508870; --danger: #ff2a55; --warn: #ffbb00; --info: #00d4ff;
+  }
+  [data-theme="light"] { --bg: #f0f4f8; --panel: rgba(255, 255, 255, 0.85); --border: rgba(0, 100, 80, 0.3); --main: #007a5e; --main-glow: rgba(0, 122, 94, 0.3); --text: #1a2a22; --text-muted: #6b8a7a; --danger: #c0392b; --warn: #d35400; --info: #2980b9; }
+  [data-theme="cyber"] { --bg: #0b0c10; --panel: rgba(31, 40, 51, 0.85); --border: rgba(252, 238, 10, 0.3); --main: #fcee0a; --main-glow: rgba(252, 238, 10, 0.5); --text: #c5c6c7; --text-muted: #45a29e; --danger: #ff003c; --warn: #f39c12; --info: #00e5ff; }
+  [data-theme="matrix"] { --bg: #000000; --panel: rgba(0, 20, 0, 0.85); --border: rgba(0, 255, 65, 0.3); --main: #00ff41; --main-glow: rgba(0, 255, 65, 0.6); --text: #00ff41; --text-muted: #008800; --danger: #ff0000; --warn: #ffff00; --info: #00ffff; }
+  [data-theme="blood"] { --bg: #1a0505; --panel: rgba(43, 10, 10, 0.85); --border: rgba(255, 0, 0, 0.3); --main: #ff0000; --main-glow: rgba(255, 0, 0, 0.5); --text: #f5d6d6; --text-muted: #9c6060; --danger: #ff4444; --warn: #ffaa00; --info: #ff6666; }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+  body {
+    background-color: var(--bg);
+    background-image: radial-gradient(circle at 50% -10%, var(--main-glow) 0%, transparent 60%), linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 100% 100%, 30px 30px, 30px 30px; color: var(--text); font-size: 14px;
+    padding: 10px; padding-top: 100px; min-height: 100vh; overflow-x: hidden;
+    transition: background-color 0.3s;
+  }
+
+  /* Переключатель тем */
+  .theme-switcher { position: fixed; top: 10px; right: 10px; z-index: 2001; display: flex; gap: 6px; background: var(--panel); padding: 6px; border-radius: 20px; border: 1px solid var(--border); backdrop-filter: blur(10px); }
+  .theme-dot { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+  .theme-dot.active { border-color: var(--text); transform: scale(1.1); }
+  .theme-dot[data-theme="dark"] { background: #020305; } .theme-dot[data-theme="light"] { background: #f0f4f8; } .theme-dot[data-theme="cyber"] { background: #fcee0a; } .theme-dot[data-theme="matrix"] { background: #00ff41; } .theme-dot[data-theme="blood"] { background: #ff0000; }
+
+  .header { text-align: center; margin-bottom: 20px; }
+  .header h1 { font-family: 'Orbitron', sans-serif; font-size: 24px; letter-spacing: 6px; color: var(--main); text-shadow: 0 0 15px var(--main-glow); }
+  .header p { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-muted); letter-spacing: 3px; margin-top: 5px; }
+
+  /* Меню выбора */
+  .category-menu { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; scrollbar-width: none; max-width: 800px; margin-left: auto; margin-right: auto; }
+  .category-menu::-webkit-scrollbar { display: none; }
+  .cat-btn {
+    background: var(--panel); border: 1px solid var(--border); color: var(--text-muted);
+    border-radius: 20px; padding: 8px 16px; font-family: 'Share Tech Mono', monospace; font-size: 12px; cursor: pointer;
+    white-space: nowrap; transition: 0.3s; text-transform: uppercase; backdrop-filter: blur(5px);
+  }
+  .cat-btn.active { background: var(--main); color: var(--bg); border-color: var(--main); box-shadow: 0 0 15px var(--main-glow); font-weight: bold; }
+
+  .search-box { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; max-width: 800px; margin-left: auto; margin-right: auto; }
+  .input-wrapper { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; display: flex; align-items: center; padding: 2px; backdrop-filter: blur(5px); transition: 0.3s; }
+  .input-wrapper:focus-within { border-color: var(--main); box-shadow: 0 0 20px var(--main-glow); }
+  .input-prefix { padding-left: 15px; color: var(--main); font-family: 'Share Tech Mono', monospace; font-size: 16px; }
+  input[type="text"] { width: 100%; background: transparent; border: none; color: var(--text); padding: 14px; font-family: 'Share Tech Mono', monospace; font-size: 15px; outline: none; }
+  
+  .action-btn { background: var(--main); color: var(--bg); border: none; padding: 16px; border-radius: 14px; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 14px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 20px var(--main-glow); transition: 0.2s; }
+  .action-btn:active { transform: scale(0.98); }
+  .action-btn:disabled { background: #333; color: #666; box-shadow: none; }
+
+  /* ДЕРЕВО РЕЗУЛЬТАТОВ */
+  #result-container { display: none; max-width: 800px; margin: 0 auto; animation: slideUp 0.4s ease; }
+  .tree-root { font-family: 'Orbitron', sans-serif; font-size: 16px; color: var(--main); font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; text-shadow: 0 0 10px var(--main-glow); }
+  .tree-branch { margin-left: 10px; border-left: 1px dashed var(--border); padding-left: 20px; display: flex; flex-direction: column; gap: 12px; }
+  
+  .tree-item { position: relative; }
+  .tree-item::before { content: '├──'; position: absolute; left: -26px; top: 4px; color: var(--border); font-family: 'Share Tech Mono', monospace; font-size: 14px; }
+  .tree-item:last-child::before { content: '└──'; }
+
+  .site-header { font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; color: var(--text); }
+  
+  .site-data { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 15px; font-family: 'Share Tech Mono', monospace; font-size: 13px; display: flex; flex-direction: column; gap: 8px; backdrop-filter: blur(10px); }
+  .site-data.found { border-left: 4px solid var(--main); }
+  .site-data.notfound { border-left: 4px solid var(--danger); color: var(--text-muted); font-style: italic; }
+  .site-data.loading { border-left: 4px solid var(--warn); color: var(--warn); animation: pulse 1s infinite; }
+  
+  .data-line { display: flex; gap: 5px; flex-wrap: wrap; }
+  .data-line b { color: var(--info); font-weight: normal; }
+  .data-line span { color: #fff; word-break: break-all; }
+  .data-line a { color: var(--main); text-decoration: none; border-bottom: 1px dotted var(--main); }
+  .data-line a:hover { color: #fff; border-color: #fff; }
+  
+  /* DORKS */
+  .dorks-box { background: rgba(0, 212, 255, 0.05); border: 1px solid var(--info); border-radius: 12px; padding: 15px; margin-top: 25px; backdrop-filter: blur(5px); animation: slideUp 0.6s ease; }
+  .dorks-title { font-family: 'Orbitron', sans-serif; color: var(--info); font-weight: bold; margin-bottom: 12px; border-bottom: 1px dashed var(--info); padding-bottom: 8px; font-size: 14px; }
+  .dorks-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .dork-link { background: rgba(0, 212, 255, 0.1); color: var(--info); padding: 8px 12px; border-radius: 8px; text-decoration: none; font-family: 'Share Tech Mono', monospace; font-size: 12px; border: 1px solid var(--info); transition: 0.2s; }
+  .dork-link:hover { background: var(--info); color: #000; }
+
+  @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+</style>
+</head>
+<body>
+
+<div class="theme-switcher">
+  <div class="theme-dot active" data-theme="dark" onclick="setTheme('dark')"></div>
+  <div class="theme-dot" data-theme="light" onclick="setTheme('light')"></div>
+  <div class="theme-dot" data-theme="cyber" onclick="setTheme('cyber')"></div>
+  <div class="theme-dot" data-theme="matrix" onclick="setTheme('matrix')"></div>
+  <div class="theme-dot" data-theme="blood" onclick="setTheme('blood')"></div>
+</div>
+
+<div class="header">
+  <h1>MEGA SCAN</h1>
+  <p>MAXIMUM POWER // ULTIMATE EDITION</p>
+</div>
+
+<!-- МЕНЮ ВЫБОРА -->
+<div class="category-menu" id="category-menu">
+  <button class="cat-btn active" onclick="setMode('auto', event)">АВТО</button>
+  <button class="cat-btn" onclick="setMode('username', event)">НИК</button>
+  <button class="cat-btn" onclick="setMode('email', event)">EMAIL</button>
+  <button class="cat-btn" onclick="setMode('phone', event)">ТЕЛЕФОН</button>
+  <button class="cat-btn" onclick="setMode('ip', event)">IP</button>
+</div>
+
+<div class="search-box">
+  <div class="input-wrapper">
+    <span class="input-prefix">></span>
+    <input type="text" id="query" placeholder="Введи цель (определю сам)...">
+  </div>
+  <button class="action-btn" id="search-btn" onclick="startScan()">[ МАКСИМАЛЬНЫЙ ПОИСК ]</button>
+</div>
+
+<div id="result-container"></div>
+
+<script>
+// ================= ТЕМЫ =================
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+  document.querySelector(`.theme-dot[data-theme="${theme}"]`).classList.add('active');
+  localStorage.setItem('osint_theme_ultimate', theme);
+}
+setTheme(localStorage.getItem('osint_theme_ultimate') || 'dark');
+
+// ================= ВЫБОР РЕЖИМА =================
+let currentMode = 'auto';
+function setMode(mode, event) {
+  currentMode = mode;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  const placeholders = {
+    'auto': 'Введи цель (определю сам)...', 'username': 'Ник (например: moonidtes)', 
+    'email': 'Email (test@mail.ru)', 'phone': 'Телефон (+7900...)', 
+    'ip': 'IP (8.8.8.8)'
+  };
+  document.getElementById('query').placeholder = placeholders[mode];
+}
+
+// ================= СЕТЬ =================
+const PROXIES = ["https://api.allorigins.win/raw?url=", "https://api.codetabs.com/v1/proxy?quest=", "https://corsproxy.io/?"];
+
+async function fetchProxy(url, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  for (const proxy of PROXIES) {
+    try {
+      const res = await fetch(proxy + encodeURIComponent(url), { signal: controller.signal });
+      clearTimeout(timer);
+      if (res.ok) return res;
+    } catch { continue; }
+  }
+  return null;
+}
+
+// ================= MD5 =================
+function md5(string) {
+  function RotateLeft(lValue, iShiftBits) { return (lValue<<iShiftBits) | (lValue>>>(32-iShiftBits)); }
+  function AddUnsigned(lX,lY) { var lX4,lY4,lX8,lY8,lResult; lX8 = (lX & 0x80000000); lY8 = (lY & 0x80000000); lX4 = (lX & 0x40000000); lY4 = (lY & 0x40000000); lResult = (lX & 0x3FFFFFFF)+(lY & 0x3FFFFFFF); if (lX4 & lY4) return (lResult ^ 0x80000000 ^ lX8 ^ lY8); if (lX4 | lY4) { if (lResult & 0x40000000) return (lResult ^ 0xC0000000 ^ lX8 ^ lY8); else return (lResult ^ 0x40000000 ^ lX8 ^ lY8); } else return (lResult ^ lX8 ^ lY8); }
+  function F(x,y,z) { return (x & y) | ((~x) & z); } function G(x,y,z) { return (x & z) | (y & (~z)); } function H(x,y,z) { return (x ^ y ^ z); } function I(x,y,z) { return (y ^ (x | (~z))); }
+  function FF(a,b,c,d,x,s,ac) { a = AddUnsigned(a, AddUnsigned(AddUnsigned(F(b, c, d), x), ac)); return AddUnsigned(RotateLeft(a, s), b); };
+  function GG(a,b,c,d,x,s,ac) { a = AddUnsigned(a, AddUnsigned(AddUnsigned(G(b, c, d), x), ac)); return AddUnsigned(RotateLeft(a, s), b); };
+  function HH(a,b,c,d,x,s,ac) { a = AddUnsigned(a, AddUnsigned(AddUnsigned(H(b, c, d), x), ac)); return AddUnsigned(RotateLeft(a, s), b); };
+  function II(a,b,c,d,x,s,ac) { a = AddUnsigned(a, AddUnsigned(AddUnsigned(I(b, c, d), x), ac)); return AddUnsigned(RotateLeft(a, s), b); };
+  function ConvertToWordArray(string) { var lWordCount; var lMessageLength = string.length; var lNumberOfWords_temp1=lMessageLength + 8; var lNumberOfWords_temp2=(lNumberOfWords_temp1-(lNumberOfWords_temp1 % 64))/64; var lNumberOfWords = (lNumberOfWords_temp2+1)*16; var lWordArray=Array(lNumberOfWords-1); var lBytePosition = 0; var lByteCount = 0; while ( lByteCount < lMessageLength ) { lWordCount = (lByteCount-(lByteCount % 4))/4; lBytePosition = (lByteCount % 4)*8; lWordArray[lWordCount] = (lWordArray[lWordCount] | (string.charCodeAt(lByteCount)<<lBytePosition)); lByteCount++; } lWordCount = (lByteCount-(lByteCount % 4))/4; lBytePosition = (lByteCount % 4)*8; lWordArray[lWordCount] = lWordArray[lWordCount] | (0x80<<lBytePosition); lWordArray[lNumberOfWords-2] = lMessageLength<<3; lWordArray[lNumberOfWords-1] = lMessageLength>>>29; return lWordArray; };
+  function WordToHex(lValue) { var WordToHexValue="",WordToHexValue_temp="",lByte,lCount; for (lCount = 0;lCount<=3;lCount++) { lByte = (lValue>>>(lCount*8)) & 255; WordToHexValue_temp = "0" + lByte.toString(16); WordToHexValue = WordToHexValue + WordToHexValue_temp.substr(WordToHexValue_temp.length-2,2); } return WordToHexValue; };
+  function Utf8Encode(string) { string = string.replace(/\r\n/g,"\n"); var utftext = ""; for (var n = 0; n < string.length; n++) { var c = string.charCodeAt(n); if (c < 128) { utftext += String.fromCharCode(c); } else if((c > 127) && (c < 2048)) { utftext += String.fromCharCode((c >> 6) | 192); utftext += String.fromCharCode((c & 63) | 128); } else { utftext += String.fromCharCode((c >> 12) | 224); utftext += String.fromCharCode(((c >> 6) & 63) | 128); utftext += String.fromCharCode((c & 63) | 128); } } return utftext; };
+  var x=Array(); var k,AA,BB,CC,DD,a,b,c,d; var S11=7, S12=12, S13=17, S14=22; var S21=5, S22=9 , S23=14, S24=20; var S31=4, S32=11, S33=16, S34=23; var S41=6, S42=10, S43=15, S44=21;
+  string = Utf8Encode(string); x = ConvertToWordArray(string); a = 0x67452301; b = 0xEFCDAB89; c = 0x98BADCFE; d = 0x10325476;
+  for (k = 0; k < x.length; k += 16) { AA = a; BB = b; CC = c; DD = d; a=FF(a,b,c,d,x[k+0], S11,0xD76AA478); d=FF(d,a,b,c,x[k+1], S12,0xE8C7B756); c=FF(c,d,a,b,x[k+2], S13,0x242070DB); b=FF(b,c,d,a,x[k+3], S14,0xC1BDCEEE); a=FF(a,b,c,d,x[k+4], S11,0xF57C0FAF); d=FF(d,a,b,c,x[k+5], S12,0x4787C62A); c=FF(c,d,a,b,x[k+6], S13,0xA8304613); b=FF(b,c,d,a,x[k+7], S14,0xFD469501); a=FF(a,b,c,d,x[k+8], S11,0x698098D8); d=FF(d,a,b,c,x[k+9], S12,0x8B44F7AF); c=FF(c,d,a,b,x[k+10],S13,0xFFFF5BB1); b=FF(b,c,d,a,x[k+11],S14,0x895CD7BE); a=FF(a,b,c,d,x[k+12],S11,0x6B901122); d=FF(d,a,b,c,x[k+13],S12,0xFD987193); c=FF(c,d,a,b,x[k+14],S13,0xA679438E); b=FF(b,c,d,a,x[k+15],S14,0x49B40821); a=GG(a,b,c,d,x[k+1], S21,0xF61E2562); d=GG(d,a,b,c,x[k+6], S22,0xC040B340); c=GG(c,d,a,b,x[k+11],S23,0x265E5A51); b=GG(b,c,d,a,x[k+0], S24,0xE9B6C7AA); a=GG(a,b,c,d,x[k+5], S21,0xD62F105D); d=GG(d,a,b,c,x[k+10],S22,0x2441453); c=GG(c,d,a,b,x[k+15],S23,0xD8A1E681); b=GG(b,c,d,a,x[k+4], S24,0xE7D3FBC8); a=GG(a,b,c,d,x[k+9], S21,0x21E1CDE6); d=GG(d,a,b,c,x[k+14],S22,0xC33707D6); c=GG(c,d,a,b,x[k+3], S23,0xF4D50D87); b=GG(b,c,d,a,x[k+8], S24,0x455A14ED); a=GG(a,b,c,d,x[k+13],S21,0xA9E3E905); d=GG(d,a,b,c,x[k+2], S22,0xFCEFA3F8); c=GG(c,d,a,b,x[k+7], S23,0x676F02D9); b=GG(b,c,d,a,x[k+12],S24,0x8D2A4C8A); a=HH(a,b,c,d,x[k+5], S31,0xFFFA3942); d=HH(d,a,b,c,x[k+8], S32,0x8771F681); c=HH(c,d,a,b,x[k+11],S33,0x6D9D6122); b=HH(b,c,d,a,x[k+14],S34,0xFDE5380C); a=HH(a,b,c,d,x[k+1], S31,0xA4BEEA44); d=HH(d,a,b,c,x[k+4], S32,0x4BDECFA9); c=HH(c,d,a,b,x[k+7], S33,0xF6BB4B60); b=HH(b,c,d,a,x[k+10],S34,0xBEBFBC70); a=HH(a,b,c,d,x[k+13],S31,0x289B7EC6); d=HH(d,a,b,c,x[k+0], S32,0xEAA127FA); c=HH(c,d,a,b,x[k+3], S33,0xD4EF3085); b=HH(b,c,d,a,x[k+6], S34,0x4881D05); a=HH(a,b,c,d,x[k+9], S31,0xD9D4D039); d=HH(d,a,b,c,x[k+12],S32,0xE6DB99E5); c=HH(c,d,a,b,x[k+15],S33,0x1FA27CF8); b=HH(b,c,d,a,x[k+2], S34,0xC4AC5665); a=II(a,b,c,d,x[k+0], S41,0xF4292244); d=II(d,a,b,c,x[k+7], S42,0x432AFF97); c=II(c,d,a,b,x[k+14],S43,0xAB9423A7); b=II(b,c,d,a,x[k+5], S44,0xFC93A039); a=II(a,b,c,d,x[k+12],S41,0x655B59C3); d=II(d,a,b,c,x[k+3], S42,0x8F0CCC92); c=II(c,d,a,b,x[k+10],S43,0xFFEFF47D); b=II(b,c,d,a,x[k+1], S44,0x85845DD1); a=II(a,b,c,d,x[k+8], S41,0x6FA87E4F); d=II(d,a,b,c,x[k+15],S42,0xFE2CE6E0); c=II(c,d,a,b,x[k+6], S43,0xA3014314); b=II(b,c,d,a,x[k+13],S44,0x4E0811A1); a=II(a,b,c,d,x[k+4], S41,0xF7537E82); d=II(d,a,b,c,x[k+11],S42,0xBD3AF235); c=II(c,d,a,b,x[k+2], S43,0x2AD7D2BB); b=II(b,c,d,a,x[k+9], S44,0xEB86D391); a=AddUnsigned(a,AA); b=AddUnsigned(b,BB); c=AddUnsigned(c,CC); d=AddUnsigned(d,DD); }
+  return (WordToHex(a)+WordToHex(b)+WordToHex(c)+WordToHex(d)).toLowerCase();
+}
+
+// ================= ИСТОЧНИКИ =================
+function getSources(query, type) {
+  if (type === 'username') {
+    return [
+      { id: 'wmn', name: 'WHATSMYNAME (700+ САЙТОВ)', url: `https://whatsmyname.app/api/lookup?username=${query}`, type: 'json',
+        check: (d) => d && Array.isArray(d.sites) && d.sites.filter(s=>s.status==='claimed').length > 0,
+        parse: (d) => {
+          const claimed = d.sites.filter(s => s.status === 'claimed');
+          return claimed.slice(0, 25).map(s => `<div class="data-line"><b>${s.name}:</b> <a href="${s.url}" target="_blank">${s.url}</a></div>`).join('');
+        }
+      },
+      { id: 'gh', name: 'GITHUB', url: `https://api.github.com/users/${query}`, type: 'json', check: (d) => d && !d.message,
+        parse: (d) => `<div class="data-line"><b>Имя:</b> <span>${d.name||'Скрыто'}</span></div><div class="data-line"><b>Репозитории:</b> <span>${d.public_repos}</span></div><div class="data-line"><a href="${d.html_url}" target="_blank">Профиль</a></div>`
+      },
+      { id: 'tg', name: 'TELEGRAM', url: `https://t.me/${query}?embed=1`, type: 'text', check: (d) => d.includes('tgme_page_title'),
+        parse: (d) => {
+          const doc = new DOMParser().parseFromString(d, 'text/html');
+          const title = doc.querySelector('.tgme_page_title')?.textContent.trim() || 'Скрыто';
+          return `<div class="data-line"><b>Имя:</b> <span>${title}</span></div><div class="data-line"><a href="https://t.me/${query}" target="_blank">t.me/${query}</a></div>`;
+        }
+      },
+      { id: 'vk', name: 'VK', url: `https://vk.com/${query}`, type: 'text', check: (d) => d.includes('og:title') && !d.includes('404'),
+        parse: (d) => `<div class="data-line"><a href="https://vk.com/${query}" target="_blank">vk.com/${query}</a></div>`
+      },
+      { id: 'reddit', name: 'REDDIT', url: `https://www.reddit.com/user/${query}/about.json`, type: 'json', check: (d) => d.data && !d.data.error,
+        parse: (d) => `<div class="data-line"><b>Карма:</b> <span>${d.data.total_karma}</span></div><div class="data-line"><b>Создан:</b> <span>${new Date(d.data.created_utc*1000).toLocaleDateString()}</span></div>`
+      },
+      { id: 'tiktok', name: 'TIKTOK', url: `https://www.tiktok.com/@${query}`, type: 'text', check: (d) => d.includes('og:title') && !d.includes('Couldn\'t find'),
+        parse: (d) => `<div class="data-line"><a href="https://www.tiktok.com/@${query}" target="_blank">tiktok.com/@${query}</a></div>`
+      },
+      { id: 'twitch', name: 'TWITCH', url: `https://www.twitch.tv/${query}`, type: 'text', check: (d) => d.includes('og:title') && !d.includes('404'),
+        parse: (d) => `<div class="data-line"><a href="https://www.twitch.tv/${query}" target="_blank">twitch.tv/${query}</a></div>`
+      },
+      { id: 'steam', name: 'STEAM', url: `https://steamcommunity.com/id/${query}/?xml=1`, type: 'text', check: (d) => d.includes('<steamID>'),
+        parse: (d) => `<div class="data-line"><a href="https://steamcommunity.com/id/${query}" target="_blank">steamcommunity.com</a></div>`
+      }
+    ];
+  } 
+  if (type === 'email') {
+    return [
+      { id: 'leaks', name: 'УТЕЧКИ (XPOSEDORNOT)', url: `https://api.xposedornot.com/v1/check-email/${query}`, type: 'json', check: (d) => d.breaches && d.breaches.length > 0,
+        parse: (d) => `<div class="data-line"><b>Баз:</b> <span style="color:var(--danger)">${d.breaches.length} шт.</span></div>`
+      },
+      { id: 'disify', name: 'DISIFY (ОДНОРАЗОВАЯ)', url: `https://disify.com/api/email/${query}`, type: 'json', check: (d) => d.format !== undefined,
+        parse: (d) => `<div class="data-line"><b>Одноразовый:</b> <span>${d.disposable ? 'ДА' : 'НЕТ'}</span></div>`
+      },
+      { id: 'gravatar', name: 'GRAVATAR', url: `https://www.gravatar.com/avatar/${md5(query.toLowerCase())}?d=404`, type: 'text', check: (res) => res.status !== 404,
+        parse: () => `<div class="data-line"><b>Аватар:</b> <img src="https://www.gravatar.com/avatar/${md5(query.toLowerCase())}?s=50" style="border-radius:50%;"></div>`
+      }
+    ];
+  }
+  if (type === 'phone') {
+    return [
+      { id: 'phone', name: 'ОПЕРАТОР СВЯЗИ', url: `https://carrier-lookup-api.omkar.cloud/lookup?phone=${query}`, type: 'json', check: (d) => d.is_valid_number,
+        parse: (d) => `<div class="data-line"><b>Оператор:</b> <span>${d.carrier}</span></div>`
+      }
+    ];
+  }
+  if (type === 'ip') {
+    return [
+      { id: 'ip', name: 'ГЕОЛОКАЦИЯ IP', url: `https://ipwho.is/${query}`, type: 'json', check: (d) => d.success,
+        parse: (d) => `<div class="data-line"><b>Страна:</b> <span>${d.country}</span></div><div class="data-line"><b>Провайдер:</b> <span>${d.connection.isp}</span></div>`
+      }
+    ];
+  }
+  return [];
+}
+
+// ================= ЗАПУСК =================
+async function startScan() {
+  const raw = document.getElementById('query').value.trim();
+  const q = raw.replace(/^@/, '');
+  if (!q) return alert('Введи данные!');
+
+  let type = currentMode;
+  if (type === 'auto') {
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(q)) type = 'email';
+    else if (/^\+?[0-9]{10,15}$/.test(q)) type = 'phone';
+    else if (/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(q)) type = 'ip';
+    else type = 'username';
+  }
+
+  const btn = document.getElementById('search-btn');
+  const container = document.getElementById('result-container');
+  btn.disabled = true;
+  container.style.display = 'block';
+  container.innerHTML = `<div class="tree-root">📁 [${type.toUpperCase()}] ${q}</div><div class="tree-branch" id="branch"></div>`;
+  const branch = document.getElementById('branch');
+
+  const sources = getSources(q, type);
+
+  if (sources.length === 0) {
+    branch.innerHTML = `<div style="color:var(--danger)">Для этого типа данных нет прямых API.</div>`;
+  } else {
+    sources.forEach(src => {
+      const item = document.createElement('div');
+      item.className = 'tree-item';
+      item.innerHTML = `<div class="site-header"><span id="icon-${src.id}">⏳</span> ${src.name}</div><div class="site-data loading" id="data-${src.id}">Запрос...</div>`;
+      branch.appendChild(item);
+    });
+
+    const promises = sources.map(src => {
+      return fetchProxy(src.url).then(async res => {
+        if (!res) return { src, data: null, res };
+        const isJson = src.type === 'json';
+        const data = isJson ? await res.json() : await res.text();
+        return { src, data, res };
+      }).catch(e => ({ src, data: null, error: e.message }));
+    });
+
+    const results = await Promise.allSettled(promises);
+
+    results.forEach((result, index) => {
+      const src = sources[index];
+      const icon = document.getElementById(`icon-${src.id}`);
+      const dataEl = document.getElementById(`data-${src.id}`);
+
+      if (result.status === 'fulfilled' && result.value.data) {
+        const { data, res } = result.value;
+        if (src.check(data, res)) {
+          icon.innerText = '🟢';
+          dataEl.className = 'site-data found';
+          dataEl.innerHTML = src.parse(data);
+        } else {
+          icon.innerText = '🔴';
+          dataEl.className = 'site-data notfound';
+          dataEl.innerText = 'Ничего не найдено.';
+        }
+      } else {
+        icon.innerText = '⚠️';
+        dataEl.className = 'site-data notfound';
+        dataEl.innerText = 'Ошибка / Таймаут.';
+      }
+    });
+  }
+
+  // DORKS
+  const dorksContainer = document.createElement('div');
+  dorksContainer.className = 'dorks-box';
+  let dorkHtml = `<div class="dorks-title">ГЛУБОКИЙ ПОИСК (DORKS)</div><div class="dorks-grid">`;
+  
+  if (type === 'username') {
+    const sites = ['vk.com', 'ok.ru', 't.me', 'avito.ru', 'pikabu.ru', 'github.com', 'pastebin.com'];
+    sites.forEach(site => {
+      dorkHtml += `<a href="https://www.google.com/search?q=%22${q}%22+site:${site}" target="_blank" class="dork-link">Google: ${site}</a>`;
+    });
+    dorkHtml += `<a href="https://yandex.ru/search/?text=%22${q}%22+site:vk.com" target="_blank" class="dork-link">Yandex: VK</a>`;
+  } else if (type === 'email') {
+    dorkHtml += `<a href="https://www.google.com/search?q=%22${q}%22" target="_blank" class="dork-link">Google</a>`;
+    dorkHtml += `<a href="https://haveibeenpwned.com/account/${q}" target="_blank" class="dork-link">HIBP</a>`;
+    dorkHtml += `<a href="https://leakcheck.io/check?query=${q}" target="_blank" class="dork-link">LeakCheck</a>`;
+  } else if (type === 'phone') {
+    dorkHtml += `<a href="https://www.google.com/search?q=%22${q}%22+site:avito.ru" target="_blank" class="dork-link">Авито</a>`;
+    dorkHtml += `<a href="https://yandex.ru/search/?text=%22${q}%22" target="_blank" class="dork-link">Яндекс</a>`;
+  }
+
+  dorkHtml += `</div>`;
+  dorksContainer.innerHTML = dorkHtml;
+  container.appendChild(dorksContainer);
+
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>
